@@ -74,7 +74,7 @@ export interface ShopeeProduct {
 
 export async function fetchProductOffers(limit = 10): Promise<ShopeeProduct[]> {
   const query = `query {
-    productOfferV2(input: { page: 1, limit: ${limit}, sortType: 2 }) {
+    productOfferV2(page: 1, limit: ${limit}, sortType: 2) {
       nodes {
         productName
         priceMin
