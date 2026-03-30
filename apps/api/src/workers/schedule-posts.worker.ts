@@ -64,8 +64,8 @@ export async function syncSchedules() {
 }
 
 // Re-sync every 5 minutes to pick up config changes
-export function startScheduler() {
-  syncSchedules()
-  cron.schedule('*/5 * * * *', syncSchedules)
+export async function startScheduler() {
+  await syncSchedules()
+  cron.schedule('*/5 * * * *', () => syncSchedules().catch(console.error))
   console.log('[scheduler] Started. Re-syncing every 5 minutes.')
 }
