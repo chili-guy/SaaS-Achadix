@@ -4,7 +4,7 @@ RUN npm install -g pnpm
 # Build stage
 FROM base AS builder
 WORKDIR /app
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/api/package.json ./apps/api/
 RUN pnpm install --frozen-lockfile
@@ -18,7 +18,7 @@ RUN pnpm build
 FROM node:20-alpine AS runner
 RUN npm install -g pnpm
 WORKDIR /app
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/api/package.json ./apps/api/
 RUN pnpm install --prod --frozen-lockfile
