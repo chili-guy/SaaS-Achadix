@@ -1,11 +1,8 @@
 import 'dotenv/config'
-import { drizzle } from 'drizzle-orm/node-postgres'
-import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { Pool } from 'pg'
-import path from 'path'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
+import { initSchema } from './db/init'
 import { authRoutes } from './routes/auth'
 import { productRoutes } from './routes/products'
 import { channelRoutes } from './routes/channels'
@@ -16,19 +13,9 @@ import { createSendPostWorker } from './workers/send-post.worker'
 
 const app = Fastify({ logger: true })
 
-async function runMigrations() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-  const db = drizzle(pool)
-  const migrationsFolder = path.join(__dirname, '..', 'drizzle')
-  console.log('[db] Running migrations from:', migrationsFolder)
-  await migrate(db, { migrationsFolder })
-  await pool.end()
-  console.log('[db] Migrations complete')
-}
-
 async function bootstrap() {
-  // Run migrations before anything else
-  await runMigrations()
+  // Initialize DB schema (CREATE TABLE IF NOT EXISTS)
+  await initSchema()
 
   // Plugins
   await app.register(cors, {
@@ -54,7 +41,7 @@ async function bootstrap() {
   createSendPostWorker()
   console.log('[worker] send-post worker started')
 
-  // Start cron scheduler (non-blocking, errors won't crash the process)
+  // Start cron scheduler (non-blocking)
   startScheduler().catch((err) =>
     console.error('[scheduler] Failed to start:', err)
   )
