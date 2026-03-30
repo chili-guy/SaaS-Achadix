@@ -2,8 +2,9 @@ import { Worker, Job } from 'bullmq'
 import { redisConnection } from './redis'
 import { db } from '../db'
 import { products, channels, posts } from '../db/schema'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { sendWhatsAppMessage } from '../lib/evolution'
+import { fetchProductOffers } from '../lib/shopee'
 
 export interface SendPostJobData {
   channelId: string
@@ -26,21 +27,56 @@ export function createSendPostWorker() {
         throw new Error(`Channel ${channelId} not found or inactive`)
       }
 
-      // Pick a random active product that hasn't been posted to this channel recently
-      const activeProducts = await db
-        .select()
-        .from(products)
-        .where(eq(products.active, true))
-
-      if (activeProducts.length === 0) {
-        throw new Error('No active products available to post')
+      // Busca ofertas frescas da Shopee
+      const offers = await fetchProductOffers(20)
+      if (offers.length === 0) {
+        throw new Error('Nenhuma oferta retornada pela API da Shopee')
       }
 
-      // Pick random product
-      const product =
-        activeProducts[Math.floor(Math.random() * activeProducts.length)]
+      // Escolhe uma oferta aleatória
+      const offer = offers[Math.floor(Math.random() * offers.length)]
 
-      // Create pending post record
+      if (!offer.affiliateLink) {
+        throw new Error('Oferta sem link de afiliado')
+      }
+
+      // Upsert: reusa produto existente pelo shopeeUrl ou cria novo
+      const [existing] = await db
+        .select()
+        .from(products)
+        .where(eq(products.shopeeUrl, offer.productUrl))
+        .limit(1)
+
+      let product
+      if (existing) {
+        const [updated] = await db
+          .update(products)
+          .set({
+            title: offer.productName,
+            price: (offer.priceMin / 100000).toFixed(2),
+            imageUrl: offer.imageUrl,
+            affiliateLink: offer.affiliateLink,
+            active: true,
+          })
+          .where(eq(products.shopeeUrl, offer.productUrl))
+          .returning()
+        product = updated
+      } else {
+        const [inserted] = await db
+          .insert(products)
+          .values({
+            title: offer.productName,
+            price: (offer.priceMin / 100000).toFixed(2),
+            imageUrl: offer.imageUrl,
+            affiliateLink: offer.affiliateLink,
+            shopeeUrl: offer.productUrl,
+            active: true,
+          })
+          .returning()
+        product = inserted
+      }
+
+      // Cria registro de post pendente
       const [post] = await db
         .insert(posts)
         .values({
@@ -59,17 +95,15 @@ export function createSendPostWorker() {
           imageUrl: product.imageUrl,
         })
 
-        // Mark as sent
         await db
           .update(posts)
           .set({ status: 'sent', sentAt: new Date() })
           .where(eq(posts.id, post.id))
 
         console.log(
-          `[send-post] Sent product "${product.title}" to channel "${channel.name}"`
+          `[send-post] Enviado "${product.title}" para o canal "${channel.name}"`
         )
       } catch (err: any) {
-        // Mark as failed
         await db
           .update(posts)
           .set({
