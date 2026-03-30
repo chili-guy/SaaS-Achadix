@@ -36,7 +36,7 @@ export async function sendWhatsAppMessage(payload: SendMessagePayload): Promise<
     },
   })
 
-  const number = `${payload.channelId}@newsletter`
+  const number = `${payload.channelId}@g.us`
   const caption = `🛒 *${payload.title}*\n\n💰 R$ ${payload.price}\n\n👉 ${payload.affiliateLink}`
 
   if (payload.imageUrl) {
