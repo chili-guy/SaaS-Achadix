@@ -1,0 +1,90 @@
+version: "3.9"
+
+networks:
+  shopbot:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+
+services:
+  # ─── Infrastructure ─────────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks:
+      - shopbot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: shopbot
+      POSTGRES_USER: shopbot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shopbot123}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shopbot -d shopbot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - shopbot
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── API ────────────────────────────────────────────────────────────────────
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    networks:
+      - shopbot
+    ports:
+      - "${API_PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://shopbot:${POSTGRES_PASSWORD:-shopbot123}@postgres:5432/shopbot
+      REDIS_URL: redis://redis:6379
+      EVOLUTION_BASE_URL: ${EVOLUTION_BASE_URL}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+      EVOLUTION_INSTANCE: ${EVOLUTION_INSTANCE}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      API_PORT: 3001
+    command: >
+      sh -c "node apps/api/dist/db/migrate.js 2>/dev/null || true && node apps/api/dist/index.js"
+
+  # ─── Web Dashboard ──────────────────────────────────────────────────────────
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    restart: unless-stopped
+    networks:
+      - shopbot
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}

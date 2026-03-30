@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.next/
+.env
+*.local
+.turbo/
+coverage/
+.pnpm-store/
+apps/api/drizzle/meta/
+*.tsbuildinfo
