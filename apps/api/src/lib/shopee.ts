@@ -8,14 +8,14 @@ function buildAuthHeader(payload: string): string {
   const secret = process.env.SHOPEE_SECRET || ''
   const timestamp = Math.floor(Date.now() / 1000)
 
-  // Shopee Affiliate API BR: HMAC-SHA256(secret, appId + timestamp + body)
-  const rawString = `${appId}${timestamp}${payload}`
+  // Shopee Affiliate API BR: SHA256(appId + timestamp + body + secret)
+  const rawString = `${appId}${timestamp}${payload}${secret}`
   const signature = crypto
-    .createHmac('sha256', secret)
+    .createHash('sha256')
     .update(rawString)
     .digest('hex')
 
-  return `${appId}:${timestamp}:${signature}`
+  return `SHA256 Credential=${appId}, Timestamp=${timestamp}, Signature=${signature}`
 }
 
 function cleanShopeeUrl(rawUrl: string): string {
