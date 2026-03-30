@@ -79,7 +79,7 @@ export async function fetchProductOffers(limit = 10): Promise<ShopeeProduct[]> {
         productName
         priceMin
         imageUrl
-        productUrl
+        productLink
         offerLink
       }
     }
@@ -107,7 +107,7 @@ export async function fetchProductOffers(limit = 10): Promise<ShopeeProduct[]> {
       productName: n.productName,
       priceMin: n.priceMin,
       imageUrl: n.imageUrl,
-      productUrl: n.productUrl,
+      productUrl: n.productLink,
       affiliateLink: n.offerLink,
     }))
   } catch (err: any) {
