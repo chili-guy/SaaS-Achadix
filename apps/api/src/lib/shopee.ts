@@ -124,7 +124,7 @@ export async function fetchProductOffers(limit = 10): Promise<ShopeeProduct[]> {
       affiliateLink: n.offerLink,
     }))
   } catch (err: any) {
-    console.error('[shopee] fetchProductOffers error:', err?.response?.data || err?.message)
+    console.error('[shopee] fetchProductOffers error:', JSON.stringify(err?.response?.data) || err?.message)
     return []
   }
 }

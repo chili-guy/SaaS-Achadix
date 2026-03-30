@@ -17,8 +17,13 @@ export async function shopeeRoutes(app: FastifyInstance) {
   // Recebe uma URL da Shopee e retorna o link de afiliado
   app.post('/generate-link', async (req, reply) => {
     const { url } = z.object({ url: z.string().url() }).parse(req.body)
-    const affiliateLink = await generateAffiliateLink(url)
-    return { affiliateLink }
+    try {
+      const affiliateLink = await generateAffiliateLink(url)
+      return { affiliateLink }
+    } catch (err: any) {
+      app.log.error({ err }, '[shopee] generate-link failed')
+      return reply.status(500).send({ error: err.message })
+    }
   })
 
   // GET /shopee/offers
