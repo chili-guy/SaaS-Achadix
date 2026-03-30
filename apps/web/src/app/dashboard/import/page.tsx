@@ -44,7 +44,7 @@ export default function ImportPage() {
       await api.post('/shopee/import', {
         shopeeUrl: offer.productUrl,
         title: offer.productName,
-        price: (offer.priceMin / 100000).toFixed(2),
+        price: Number(offer.priceMin).toFixed(2),
         imageUrl: offer.imageUrl,
       })
       toast.success('Produto importado com sucesso!')
@@ -162,7 +162,7 @@ export default function ImportPage() {
                   {offer.productName}
                 </p>
                 <p className="text-orange-600 font-bold mt-1">
-                  R$ {(offer.priceMin / 100000).toFixed(2)}
+                  R$ {Number(offer.priceMin).toFixed(2)}
                 </p>
                 <Button
                   size="sm"
