@@ -37,7 +37,31 @@ export async function sendWhatsAppMessage(payload: SendMessagePayload): Promise<
   })
 
   const number = `${payload.channelId}@g.us`
-  const caption = `🛒 *${payload.title}*\n\n💰 R$ ${payload.price}\n\n👉 ${payload.affiliateLink}`
+
+  const hooks = [
+    '🔥 *OFERTA IMPERDÍVEL!* 🔥',
+    '⚡ *PROMOÇÃO RELÂMPAGO!* ⚡',
+    '🚨 *CORRE QUE TÁ BARATO!* 🚨',
+    '💥 *QUEIMA DE ESTOQUE!* 💥',
+    '🎯 *ACHADO DO DIA!* 🎯',
+    '😱 *NÃO ACREDITO NESSE PREÇO!* 😱',
+    '🤑 *ECONOMIA NA CERTA!* 🤑',
+    '🏆 *MELHOR PREÇO DO DIA!* 🏆',
+  ]
+  const hook = hooks[Math.floor(Math.random() * hooks.length)]
+
+  const caption = [
+    hook,
+    '',
+    `📦 *${payload.title}*`,
+    '',
+    `💰 *R$ ${payload.price}* à vista`,
+    '',
+    '⏳ Estoque limitado — garanta o seu agora!',
+    '',
+    '👇 Clique e aproveite:',
+    payload.affiliateLink,
+  ].join('\n')
 
   if (payload.imageUrl) {
     // Send image with caption

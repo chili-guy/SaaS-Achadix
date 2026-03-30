@@ -53,7 +53,7 @@ export function createSendPostWorker() {
           .update(products)
           .set({
             title: offer.productName,
-            price: (offer.priceMin / 100000).toFixed(2),
+            price: (offer.priceMin / 100).toFixed(2),
             imageUrl: offer.imageUrl,
             affiliateLink: offer.affiliateLink,
             active: true,
@@ -66,7 +66,7 @@ export function createSendPostWorker() {
           .insert(products)
           .values({
             title: offer.productName,
-            price: (offer.priceMin / 100000).toFixed(2),
+            price: (offer.priceMin / 100).toFixed(2),
             imageUrl: offer.imageUrl,
             affiliateLink: offer.affiliateLink,
             shopeeUrl: offer.productUrl,
