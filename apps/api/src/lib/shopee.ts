@@ -73,8 +73,8 @@ export interface ShopeeProduct {
 }
 
 export async function fetchProductOffers(limit = 10): Promise<ShopeeProduct[]> {
-  const query = `query getProductOffer($input: ProductOfferV2Input!) {
-    productOfferV2(input: $input) {
+  const query = `query {
+    productOfferV2(input: { page: 1, limit: ${limit}, sortType: 2 }) {
       nodes {
         productName
         priceMin
@@ -85,15 +85,7 @@ export async function fetchProductOffers(limit = 10): Promise<ShopeeProduct[]> {
     }
   }`
 
-  const variables = {
-    input: {
-      page: 1,
-      limit,
-      sortType: 2,
-    },
-  }
-
-  const body = JSON.stringify({ query, variables })
+  const body = JSON.stringify({ query })
   const auth = buildAuthHeader(body)
 
   try {
@@ -104,10 +96,12 @@ export async function fetchProductOffers(limit = 10): Promise<ShopeeProduct[]> {
       },
     })
 
-    const nodes =
-      data?.data?.productOfferV2?.nodes ||
-      data?.data?.productOffer?.nodes ||
-      []
+    if (data?.errors?.length) {
+      console.error('[shopee] fetchProductOffers API error:', data.errors[0].message)
+      return []
+    }
+
+    const nodes = data?.data?.productOfferV2?.nodes || []
 
     return nodes.map((n: any) => ({
       productName: n.productName,
