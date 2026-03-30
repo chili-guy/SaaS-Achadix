@@ -32,20 +32,13 @@ function cleanShopeeUrl(rawUrl: string): string {
 export async function generateAffiliateLink(originUrl: string): Promise<string> {
   originUrl = cleanShopeeUrl(originUrl)
 
-  const query = `mutation generateShortLink($input: GenerateShortLinkInput!) {
-    generateShortLink(input: $input) {
-      short_link
+  const query = `mutation {
+    generateShortLink(input: { originUrl: "${originUrl}", subIds: ["shopbot"] }) {
+      shortLink
     }
   }`
 
-  const variables = {
-    input: {
-      originUrl,
-      subIds: ['shopbot'],
-    },
-  }
-
-  const body = JSON.stringify({ query, variables })
+  const body = JSON.stringify({ query })
   const auth = buildAuthHeader(body)
 
   try {
@@ -60,7 +53,7 @@ export async function generateAffiliateLink(originUrl: string): Promise<string> 
       throw new Error(data.errors[0].message)
     }
 
-    const shortLink = data?.data?.generateShortLink?.short_link
+    const shortLink = data?.data?.generateShortLink?.shortLink
     if (!shortLink) throw new Error('Link não retornado pela API')
     return shortLink
   } catch (err: any) {
