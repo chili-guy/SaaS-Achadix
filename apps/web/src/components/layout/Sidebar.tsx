@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
-import { ShoppingBag, Radio, History, Settings, LogOut } from 'lucide-react'
+import { ShoppingBag, Radio, History, Settings, LogOut, Download } from 'lucide-react'
 import { removeToken } from '@/lib/auth'
 
 const navItems = [
   { href: '/dashboard/products', label: 'Produtos', icon: ShoppingBag },
+  { href: '/dashboard/import', label: 'Importar Shopee', icon: Download },
   { href: '/dashboard/channels', label: 'Canais', icon: Radio },
   { href: '/dashboard/history', label: 'Histórico', icon: History },
   { href: '/dashboard/settings', label: 'Configurações', icon: Settings },

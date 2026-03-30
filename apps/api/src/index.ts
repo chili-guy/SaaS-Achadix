@@ -8,6 +8,7 @@ import { productRoutes } from './routes/products'
 import { channelRoutes } from './routes/channels'
 import { postRoutes } from './routes/posts'
 import { settingsRoutes } from './routes/settings'
+import { shopeeRoutes } from './routes/shopee'
 import { startScheduler } from './workers/schedule-posts.worker'
 import { createSendPostWorker } from './workers/send-post.worker'
 
@@ -33,6 +34,7 @@ async function bootstrap() {
   await app.register(channelRoutes, { prefix: '/channels' })
   await app.register(postRoutes, { prefix: '/posts' })
   await app.register(settingsRoutes, { prefix: '/settings' })
+  await app.register(shopeeRoutes, { prefix: '/shopee' })
 
   // Health check
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date() }))
