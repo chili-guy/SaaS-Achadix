@@ -17,7 +17,18 @@ function buildAuthHeader(payload: string): string {
 
 // ─── Generate affiliate short link ────────────────────────────────────────────
 
+function cleanShopeeUrl(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl)
+    // Mantém apenas o path — remove todos os query params de rastreamento
+    return `${url.origin}${url.pathname}`
+  } catch {
+    return rawUrl
+  }
+}
+
 export async function generateAffiliateLink(originUrl: string): Promise<string> {
+  originUrl = cleanShopeeUrl(originUrl)
   const query = `
     mutation generateShortLink($input: GenerateShortLinkInput!) {
       generateShortLink(input: $input) {
