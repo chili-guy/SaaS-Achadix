@@ -2,24 +2,15 @@ import axios from 'axios'
 import { db } from '../db'
 import { settings } from '../db/schema'
 
-interface EvolutionConfig {
-  baseUrl: string
-  apiKey: string
-  instanceName: string
-}
-
-async function getEvolutionConfig(): Promise<EvolutionConfig> {
+async function getEvolutionConfig() {
   const allSettings = await db.select().from(settings)
-  const map = Object.fromEntries(allSettings.map((s) => [s.key, s.value]))
+  const map = Object.fromEntries(allSettings.map((s) => [s.key, s.value.trim()]))
 
-  const baseUrl =
-    map['evolution_base_url'] || process.env.EVOLUTION_BASE_URL || ''
-  const apiKey =
-    map['evolution_api_key'] || process.env.EVOLUTION_API_KEY || ''
-  const instanceName =
-    map['evolution_instance'] || process.env.EVOLUTION_INSTANCE || ''
-
-  return { baseUrl, apiKey, instanceName }
+  return {
+    baseUrl: map['evolution_base_url'] || process.env.EVOLUTION_BASE_URL || '',
+    apiKey: map['evolution_api_key'] || process.env.EVOLUTION_API_KEY || '',
+    instanceName: map['evolution_instance'] || process.env.EVOLUTION_INSTANCE || '',
+  }
 }
 
 export interface SendMessagePayload {
@@ -30,18 +21,12 @@ export interface SendMessagePayload {
   imageUrl: string
 }
 
-export async function sendWhatsAppMessage(
-  payload: SendMessagePayload
-): Promise<void> {
+export async function sendWhatsAppMessage(payload: SendMessagePayload): Promise<void> {
   const config = await getEvolutionConfig()
 
   if (!config.baseUrl || !config.apiKey || !config.instanceName) {
-    throw new Error(
-      'Evolution API not configured. Set baseUrl, apiKey and instanceName in Settings.'
-    )
+    throw new Error('Evolution API not configured. Set baseUrl, apiKey and instanceName in Settings.')
   }
-
-  const text = `🛒 *${payload.title}*\n\n💰 R$ ${payload.price}\n\n👉 ${payload.affiliateLink}`
 
   const client = axios.create({
     baseURL: config.baseUrl,
@@ -51,12 +36,24 @@ export async function sendWhatsAppMessage(
     },
   })
 
-  await client.post(
-    `/message/sendText/${config.instanceName}`,
-    {
-      number: `${payload.channelId}@newsletter`,
-      text,
+  const number = `${payload.channelId}@newsletter`
+  const caption = `🛒 *${payload.title}*\n\n💰 R$ ${payload.price}\n\n👉 ${payload.affiliateLink}`
+
+  if (payload.imageUrl) {
+    // Send image with caption
+    await client.post(`/message/sendMedia/${config.instanceName}`, {
+      number,
+      mediatype: 'image',
+      mimetype: 'image/jpeg',
+      caption,
       media: payload.imageUrl,
-    }
-  )
+      fileName: 'produto.jpg',
+    })
+  } else {
+    // Send text only
+    await client.post(`/message/sendText/${config.instanceName}`, {
+      number,
+      text: caption,
+    })
+  }
 }
